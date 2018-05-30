@@ -8,25 +8,36 @@ $tag     = $_GET['tag'];
 $event   = $_GET['event'];
 $ext_ip  = $_SERVER['REMOTE_ADDR'];
 
-$link = mysql_connect('localhost', 'REPLACE_USERNAME', 'REPLACE_PASSWORD');
-if (!$link) {
-    die('Not connected : ' . mysql_error());
-}
+$mysqli = new mysqli('localhost', 'REPLACE_USERNAME', 'REPLACE_PASSWORD', 'brightsign');
 
-$db_selected = mysql_select_db('brightsign', $link);
-if (!$db_selected) {
-    die ('Can\'t use foo : ' . mysql_error());
+/* Check Connection */
+if ($mysqli->connect_errno) {
+    printf("Connect failed: %s\n", $mysqli->connect_error);
+	exit();
 }
 	
 $sql1 = "DELETE FROM heartbeats WHERE snum='$serial';";
-$result1 = mysql_query($sql1) or die(mysql_error());
+if (!$mysqli->query($sql1)){
+	printf("Error deleting from heartbeats: %s\n", $mysqli->error);
+	/* close connection */
+	$mysqli->close();
+	exit();
+}
 
 if ($tag=="") $tag="none";
 if ($event=="") $event="none";
 
 
 $sql2 = "INSERT INTO heartbeats (snum,version,fw,int_ip,ext_ip,tag,event) VALUES ('$serial','$version','$fw','$int_ip','$ext_ip','$tag','$event');";
-$result2 = mysql_query($sql2) or die(mysql_error());
+if (!$mysqli->query($sql2)){
+	printf("Error inserting into heartbeats: %s\n", $mysqli->error);
+	/* close connection */
+	$mysqli->close();
+	exit();
+}
+
+/* close connection */
+$mysqli->close();
 
 exit(header("Status: 200 OK"));
 	
